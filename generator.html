@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Job Post Generator</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@700;800&display=swap');
+:root {
+  --primary: #1a1a2e;
+  --accent: #e94560;
+  --bg: #f0f0f8;
+  --card: #ffffff;
+  --border: #d0d0e8;
+  --text: #1a1a2e;
+  --muted: #6b6b8a;
+  --success: #10b981;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+header { background: linear-gradient(135deg, #1a1a2e, #16213e); padding: 1.25rem 2rem; display: flex; align-items: center; justify-content: space-between; }
+header h1 { font-family: 'Manrope', sans-serif; font-size: 1.4rem; font-weight: 800; color: #fff; }
+header span { font-size: 0.8rem; color: rgba(255,255,255,0.6); background: rgba(255,255,255,0.1); padding: 0.3rem 0.75rem; border-radius: 50px; }
+
+.layout { display: grid; grid-template-columns: 400px 1fr; gap: 1.5rem; padding: 1.5rem; max-width: 1400px; margin: 0 auto; }
+
+.panel { background: var(--card); border: 2px solid var(--border); border-radius: 16px; padding: 1.5rem; }
+.panel-title { font-family: 'Manrope', sans-serif; font-size: 1rem; font-weight: 800; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; }
+.panel-title .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+
+.form-group { margin-bottom: 1.1rem; }
+label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--muted); margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.06em; }
+input, textarea, select { width: 100%; padding: 0.7rem 0.9rem; border: 2px solid var(--border); border-radius: 10px; font-size: 0.9rem; font-family: 'Inter', sans-serif; color: var(--text); background: var(--bg); transition: border-color 0.2s; }
+input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); background: #fff; }
+
+.add-row { display: flex; gap: 0.5rem; }
+.add-row input { flex: 1; }
+.btn-add { background: var(--primary); color: #fff; border: none; padding: 0.7rem 1rem; border-radius: 10px; font-weight: 600; cursor: pointer; white-space: nowrap; font-size: 0.85rem; flex-shrink: 0; }
+.btn-add:hover { background: var(--accent); }
+
+.companies-list { display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.75rem; max-height: 160px; overflow-y: auto; }
+.company-tag { display: flex; align-items: center; justify-content: space-between; padding: 0.45rem 0.75rem; background: #eaeaf8; border-radius: 8px; font-size: 0.85rem; font-weight: 500; }
+.company-tag .remove-btn { background: none; border: none; color: var(--accent); cursor: pointer; font-size: 1.1rem; line-height: 1; padding: 0 0.2rem; }
+
+.countries-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.35rem; max-height: 220px; overflow-y: auto; margin-top: 0.5rem; }
+.country-label { display: flex; align-items: center; gap: 0.5rem; padding: 0.35rem 0.5rem; border-radius: 8px; cursor: pointer; font-size: 0.82rem; user-select: none; }
+.country-label:hover { background: #eaeaf8; }
+.country-label input[type="checkbox"] { accent-color: var(--accent); width: 14px; height: 14px; flex-shrink: 0; cursor: pointer; }
+.select-all-btn { font-size: 0.78rem; color: var(--accent); background: none; border: none; cursor: pointer; font-weight: 600; }
+
+.toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 0.6rem 0; border-bottom: 1px solid var(--border); }
+.toggle-row:last-child { border-bottom: none; }
+.toggle-label { font-size: 0.85rem; font-weight: 500; }
+.toggle { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-slider { position: absolute; inset: 0; background: var(--border); border-radius: 50px; cursor: pointer; transition: 0.3s; }
+.toggle-slider:before { content: ''; position: absolute; width: 16px; height: 16px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.3s; }
+.toggle input:checked + .toggle-slider { background: var(--accent); }
+.toggle input:checked + .toggle-slider:before { transform: translateX(18px); }
+
+.btn-generate { width: 100%; padding: 1rem; background: linear-gradient(135deg, #e94560, #c73652); color: #fff; border: none; border-radius: 12px; font-family: 'Manrope', sans-serif; font-size: 1rem; font-weight: 800; cursor: pointer; transition: all 0.2s; margin-top: 1rem; box-shadow: 0 4px 16px rgba(233,69,96,0.3); }
+.btn-generate:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(233,69,96,0.4); }
+.btn-generate:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+.progress-wrap { margin-top: 1rem; display: none; }
+.progress-bar { height: 8px; background: #eaeaf8; border-radius: 50px; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, #e94560, #c73652); border-radius: 50px; transition: width 0.3s; width: 0%; }
+.progress-text { font-size: 0.78rem; color: var(--muted); margin-top: 0.4rem; text-align: center; }
+
+.log-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+.log-stats { display: flex; gap: 1rem; }
+.stat-box { text-align: center; padding: 0.6rem 1rem; background: var(--bg); border-radius: 10px; border: 2px solid var(--border); }
+.stat-num { font-family: 'Manrope', sans-serif; font-size: 1.5rem; font-weight: 800; color: var(--accent); }
+.stat-lbl { font-size: 0.7rem; color: var(--muted); font-weight: 600; text-transform: uppercase; }
+.log-box { background: #0d1117; border-radius: 12px; padding: 1rem; height: 420px; overflow-y: auto; font-family: monospace; font-size: 0.8rem; line-height: 1.6; }
+.log-line { padding: 0.15rem 0; }
+.log-line.success { color: #10b981; }
+.log-line.error { color: #ef4444; }
+.log-line.info { color: #60a5fa; }
+.log-line.warn { color: #f59e0b; }
+
+.preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.75rem; margin-top: 0.75rem; max-height: 280px; overflow-y: auto; }
+.preview-card { background: var(--bg); border: 2px solid var(--border); border-radius: 10px; padding: 0.9rem; font-size: 0.82rem; }
+.preview-card .p-title { font-weight: 700; margin-bottom: 0.3rem; }
+.preview-card .p-company { color: var(--muted); font-size: 0.75rem; }
+.preview-card .p-tag { display: inline-block; padding: 0.15rem 0.5rem; background: rgba(233,69,96,0.1); color: var(--accent); border-radius: 4px; font-size: 0.7rem; font-weight: 600; margin-top: 0.4rem; }
+.btn-download { background: var(--success); color: #fff; border: none; padding: 0.7rem 1.5rem; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 0.9rem; }
+.btn-download:hover { background: #059669; }
+
+@media(max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>⚡ Job Post Generator</h1>
+  <span>No API needed — Template Mode</span>
+</header>
+
+<div class="layout">
+
+  <!-- LEFT PANEL -->
+  <div style="display:flex;flex-direction:column;gap:1.25rem;">
+
+    <!-- Companies -->
+    <div class="panel">
+      <div class="panel-title"><div class="dot"></div> Companies</div>
+      <div class="add-row">
+        <input type="text" id="companyInput" placeholder="e.g. Google, Amazon, Tesla..." />
+        <button class="btn-add" id="addBtn">+ Add</button>
+      </div>
+      <div style="margin-top:0.4rem;font-size:0.75rem;color:var(--muted)">Tip: paste multiple companies separated by commas</div>
+      <div class="companies-list" id="companiesList">
+        <div style="color:var(--muted);font-size:0.82rem;padding:0.5rem 0">No companies added yet</div>
+      </div>
+    </div>
+
+    <!-- Countries -->
+    <div class="panel">
+      <div class="panel-title"><div class="dot"></div> Countries</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+        <span style="font-size:0.78rem;color:var(--muted)">Select target countries</span>
+        <button class="select-all-btn" id="selectAllBtn">Select All</button>
+      </div>
+      <div class="countries-grid" id="countriesGrid"></div>
+    </div>
+
+    <!-- Settings -->
+    <div class="panel">
+      <div class="panel-title"><div class="dot"></div> Settings</div>
+      <div class="form-group">
+        <label>Posts per Company</label>
+        <input type="number" id="postsPerCompany" value="100" min="1" max="9999999" />
+      </div>
+      <div class="form-group">
+        <label>Apply Now URL</label>
+        <input type="text" id="applyURL" value="https://remotejob09.job4intern.com/pages/job-application" />
+      </div>
+      <div class="toggle-row">
+        <span class="toggle-label">50% Remote / 50% All Types</span>
+        <label class="toggle"><input type="checkbox" id="remoteToggle" checked><span class="toggle-slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <span class="toggle-label">Include JSON-LD Schema</span>
+        <label class="toggle"><input type="checkbox" id="schemaToggle" checked><span class="toggle-slider"></span></label>
+      </div>
+    </div>
+
+    <button class="btn-generate" id="generateBtn">⚡ Generate Job Posts</button>
+
+    <div class="progress-wrap" id="progressWrap">
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="progress-text" id="progressText">Starting...</div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div style="display:flex;flex-direction:column;gap:1.25rem;">
+    <div class="panel">
+      <div class="log-header">
+        <div class="panel-title" style="margin:0"><div class="dot"></div> Generation Log</div>
+        <div class="log-stats">
+          <div class="stat-box"><div class="stat-num" id="statTotal">0</div><div class="stat-lbl">Total</div></div>
+          <div class="stat-box"><div class="stat-num" id="statDone">0</div><div class="stat-lbl">Done</div></div>
+          <div class="stat-box"><div class="stat-num" id="statFailed">0</div><div class="stat-lbl">Failed</div></div>
+        </div>
+      </div>
+      <div class="log-box" id="logBox">
+        <div class="log-line info">👋 Welcome! Add companies, select countries, then click Generate.</div>
+        <div class="log-line info">📁 Files will be downloaded as a ZIP to your computer.</div>
+        <div class="log-line info">✅ No API key needed — using built-in template content.</div>
+      </div>
+    </div>
+
+    <div class="panel" id="previewSection" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
+        <div class="panel-title" style="margin:0"><div class="dot"></div> Generated Posts Preview</div>
+        <button class="btn-download" id="downloadBtn">⬇️ Download All as ZIP</button>
+      </div>
+      <div class="preview-grid" id="previewGrid"></div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+<script>
+// ── Data ──
+var COUNTRIES = [
+  "United States","United Kingdom","Canada","Australia","India",
+  "Germany","France","Netherlands","Sweden","Norway","Denmark",
+  "Spain","Italy","Portugal","Poland","Brazil","Mexico","Argentina",
+  "Japan","South Korea","Singapore","Philippines","Indonesia","Malaysia",
+  "South Africa","Nigeria","Kenya","UAE","Saudi Arabia","Israel",
+  "New Zealand","Ireland","Switzerland","Belgium","Austria","Finland"
+];
+
+var JOB_TYPES_REMOTE = [
+  "Remote Customer Service","Remote Data Entry","Remote Software Engineer",
+  "Remote Marketing Manager","Remote Sales Representative","Remote Content Writer",
+  "Remote Project Manager","Remote Virtual Assistant","Remote UX Designer","Remote DevOps Engineer"
+];
+
+var JOB_TYPES_ALL = [
+  "Operations Manager","Financial Analyst","HR Manager","Business Development Manager",
+  "Product Manager","Supply Chain Analyst","Quality Assurance Engineer",
+  "Administrative Assistant","Graphic Designer","Social Media Manager"
+];
+
+// ── State ──
+var companies = [];
+var selectedCountries = [];
+var generatedFiles = {};
+var statDone = 0;
+var statFailed = 0;
+
+// ── Countries Init ──
+function initCountries() {
+  var grid = document.getElementById('countriesGrid');
+  grid.innerHTML = '';
+  for (var i = 0; i < COUNTRIES.length; i++) {
+    (function(country) {
+      var label = document.createElement('label');
+      label.className = 'country-label';
+
+      var cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.value = country;
+      cb.addEventListener('change', function() {
+        updateSelectedCountries();
+      });
+
+      var text = document.createTextNode(country);
+      label.appendChild(cb);
+      label.appendChild(text);
+      grid.appendChild(label);
+    })(COUNTRIES[i]);
+  }
+}
+
+function updateSelectedCountries() {
+  selectedCountries = [];
+  var checkboxes = document.querySelectorAll('#countriesGrid input[type="checkbox"]');
+  for (var i = 0; i < checkboxes.length; i++) {
+    if (checkboxes[i].checked) {
+      selectedCountries.push(checkboxes[i].value);
+    }
+  }
+}
+
+// ── Select All ──
+document.getElementById('selectAllBtn').addEventListener('click', function() {
+  var checkboxes = document.querySelectorAll('#countriesGrid input[type="checkbox"]');
+  var allChecked = true;
+  for (var i = 0; i < checkboxes.length; i++) {
+    if (!checkboxes[i].checked) { allChecked = false; break; }
+  }
+  for (var i = 0; i < checkboxes.length; i++) {
+    checkboxes[i].checked = !allChecked;
+  }
+  updateSelectedCountries();
+  this.textContent = allChecked ? 'Select All' : 'Deselect All';
+});
+
+// ── Companies ──
+function addCompanies() {
+  var input = document.getElementById('companyInput');
+  var val = input.value.trim();
+  if (!val) return;
+  var parts = val.split(',');
+  for (var i = 0; i < parts.length; i++) {
+    var name = parts[i].trim();
+    if (name && companies.indexOf(name) === -1) {
+      companies.push(name);
+    }
+  }
+  input.value = '';
+  renderCompanies();
+}
+
+document.getElementById('addBtn').addEventListener('click', addCompanies);
+document.getElementById('companyInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') addCompanies();
+});
+
+function removeCompany(name) {
+  companies = companies.filter(function(c) { return c !== name; });
+  renderCompanies();
+}
+
+function renderCompanies() {
+  var list = document.getElementById('companiesList');
+  list.innerHTML = '';
+  if (companies.length === 0) {
+    var empty = document.createElement('div');
+    empty.style.cssText = 'color:var(--muted);font-size:0.82rem;padding:0.5rem 0';
+    empty.textContent = 'No companies added yet';
+    list.appendChild(empty);
+    return;
+  }
+  for (var i = 0; i < companies.length; i++) {
+    (function(name) {
+      var div = document.createElement('div');
+      div.className = 'company-tag';
+
+      var span = document.createElement('span');
+      span.textContent = '🏢 ' + name;
+
+      var btn = document.createElement('button');
+      btn.className = 'remove-btn';
+      btn.textContent = '×';
+      btn.addEventListener('click', function() { removeCompany(name); });
+
+      div.appendChild(span);
+      div.appendChild(btn);
+      list.appendChild(div);
+    })(companies[i]);
+  }
+}
+
+// ── Log ──
+function log(msg, type) {
+  type = type || 'info';
+  var box = document.getElementById('logBox');
+  var line = document.createElement('div');
+  line.className = 'log-line ' + type;
+  var t = new Date();
+  var time = t.getHours().toString().padStart(2,'0') + ':' + t.getMinutes().toString().padStart(2,'0') + ':' + t.getSeconds().toString().padStart(2,'0');
+  line.textContent = '[' + time + '] ' + msg;
+  box.appendChild(line);
+  box.scrollTop = box.scrollHeight;
+}
+
+// ── Template Content Generator ──
+function generateDescription(company, country, jobType, isRemote) {
+  var location = isRemote ? 'Remote' : country;
+  var workEnv = isRemote
+    ? 'As a fully remote ' + jobType + ', you will have access to all the tools, resources, and support you need to succeed from wherever you are in the world. Our remote work culture is built on trust, transparency, and clear communication, ensuring that every team member feels connected, valued, and empowered regardless of their physical location.'
+    : 'As a ' + jobType + ' based in ' + country + ', you will be part of a vibrant local team that benefits from both the resources of a global organization and the close-knit culture of a regional office. Our ' + country + ' operations are a critical part of ' + company + 's global strategy, and the work you do here will have a meaningful impact on the organization as a whole.';
+
+  var locationLine = isRemote
+    ? 'on a fully remote basis'
+    : 'based in ' + country;
+
+  var remoteOffer = isRemote
+    ? 'A fully remote work arrangement with flexible hours, allowing you to work from anywhere in the world while maintaining a healthy work-life balance'
+    : 'A professional and supportive work environment in ' + country + ' with flexible working arrangements to help you balance personal and professional commitments';
+
+  var prevExp = isRemote
+    ? 'remote or distributed team environment'
+    : country + '-based or international';
+
+  var lines = [
+    '## About ' + company,
+    '',
+    company + ' is a globally recognized organization committed to innovation, excellence, and creating meaningful impact across industries. With operations spanning multiple countries and a diverse workforce of talented professionals, ' + company + ' continues to lead the way in delivering exceptional value to customers and communities worldwide. At ' + company + ', we believe that our people are our greatest asset, and we invest heavily in their growth, well-being, and success. Our culture is built on collaboration, integrity, and a shared passion for making a difference.',
+    '',
+    'We are currently seeking a highly motivated and experienced ' + jobType + ' to join our growing team ' + locationLine + '. This is an exciting opportunity to contribute to a dynamic organization that values fresh ideas, strategic thinking, and professional excellence. If you are looking for a role where your contributions will be seen, valued, and rewarded, ' + company + ' is the place for you.',
+    '',
+    '## About the Role',
+    '',
+    'The ' + jobType + ' position at ' + company + ' is a full-time opportunity designed for professionals who thrive in fast-paced, results-oriented environments. As a ' + jobType + ', you will play a pivotal role in supporting ' + company + 's strategic objectives while working alongside a team of dedicated and highly skilled individuals. This role offers unparalleled exposure to industry-leading practices, cutting-edge tools, and a collaborative work culture that encourages innovation at every level.',
+    '',
+    'In this role, you will be responsible for driving key initiatives, managing critical workflows, and delivering measurable outcomes that align with ' + company + 's long-term vision. Whether you are collaborating with cross-functional teams, engaging with stakeholders, or independently managing complex projects, your work as a ' + jobType + ' will directly contribute to the organization continued growth and success.',
+    '',
+    '## Key Responsibilities',
+    '',
+    'As a ' + jobType + ' at ' + company + ', your day-to-day responsibilities will include:',
+    '',
+    '- Lead and manage core ' + jobType + ' functions across ' + company + 's ' + location + ' operations, ensuring all activities align with organizational goals and quality standards',
+    '- Collaborate closely with cross-functional teams including product, engineering, marketing, and operations to deliver integrated solutions and achieve shared business objectives',
+    '- Develop, implement, and continuously improve processes, systems, and workflows that enhance productivity and operational efficiency across all relevant departments',
+    '- Analyze data, generate insights, and present findings to senior leadership and key stakeholders to support informed decision-making and strategic planning',
+    '- Build and maintain strong relationships with internal teams, external partners, clients, and vendors to ensure seamless communication and successful project delivery',
+    '- Monitor industry trends, competitive landscapes, and emerging best practices to ensure ' + company + ' remains at the forefront of its field',
+    '- Mentor and support junior team members, providing guidance, feedback, and coaching to help them grow professionally',
+    '- Prepare detailed reports, documentation, presentations, and strategic plans that communicate progress and recommendations clearly and concisely',
+    '- Manage multiple projects simultaneously, prioritizing tasks effectively and meeting deadlines without compromising on quality',
+    '- Participate actively in team meetings, planning sessions, and company-wide initiatives, contributing ideas and insights that help shape ' + company + 's direction',
+    '',
+    '## Required Qualifications',
+    '',
+    'To be considered for the ' + jobType + ' role at ' + company + ', candidates must meet the following minimum qualifications:',
+    '',
+    '- Bachelor degree or higher in a relevant field such as Business Administration, Computer Science, Engineering, Marketing, Finance, or a related discipline',
+    '- A minimum of 3 to 5 years of professional experience in a ' + jobType + ' role or a closely related position, with a demonstrated track record of delivering results',
+    '- Strong analytical and problem-solving skills with the ability to interpret complex data, identify trends, and develop actionable strategies that drive business outcomes',
+    '- Excellent written and verbal communication skills in English, with the ability to convey complex ideas clearly to a wide range of audiences',
+    '- Proficiency with industry-standard tools, platforms, and software relevant to the ' + jobType + ' function',
+    '- Proven ability to work independently and as part of a team, managing time effectively and maintaining high levels of productivity',
+    '- Strong organizational skills and meticulous attention to detail, with the ability to manage multiple priorities simultaneously',
+    '',
+    '## Preferred Qualifications',
+    '',
+    'While not required, the following qualifications will strengthen your application:',
+    '',
+    '- Advanced degree such as a Masters, MBA, or professional certification relevant to the ' + jobType + ' function',
+    '- Previous experience working in a ' + prevExp + ' setting with exposure to diverse markets and business practices',
+    '- Familiarity with agile methodologies, lean principles, or other modern frameworks used to manage projects and optimize workflows',
+    '- Experience with data visualization tools, business intelligence platforms, or advanced reporting systems',
+    '- A passion for continuous learning and staying current with the latest trends and innovations in the ' + jobType + ' field',
+    '',
+    '## What We Offer',
+    '',
+    'At ' + company + ', we are committed to creating an environment where our employees can thrive both personally and professionally:',
+    '',
+    '- A competitive compensation package that reflects your experience, skills, and contributions, along with regular performance reviews',
+    '- Comprehensive health and wellness benefits including medical, dental, and vision coverage designed to support you and your family',
+    '- ' + remoteOffer,
+    '- Generous paid time off including annual leave, public holidays, sick days, and personal days',
+    '- Access to world-class professional development resources including online courses, industry conferences, certifications, and mentorship programs',
+    '- A clear and transparent career progression framework that rewards performance, initiative, and leadership',
+    '- An inclusive, diverse, and welcoming workplace culture where every voice is heard and every team member is empowered',
+    '- Employee recognition programs, team-building activities, and company-wide events that celebrate achievements',
+    '',
+    '## Work Environment',
+    '',
+    company + ' takes pride in fostering a workplace culture that is inclusive, collaborative, and forward-thinking. ' + workEnv,
+    '',
+    'We are proud of the diversity of our team and the unique perspectives that each member brings to the table. At ' + company + ', we do not just accept difference — we celebrate it, nurture it, and believe it makes us stronger and more effective as an organization.',
+    '',
+    '## How to Apply',
+    '',
+    'If you are excited about the opportunity to join ' + company + ' as a ' + jobType + ' and believe you have the skills and passion to make a meaningful contribution, we would love to hear from you. Please submit your updated resume along with a brief cover letter outlining your relevant experience and why you are the right fit for this role.',
+    '',
+    'Our recruitment team reviews every application carefully and will reach out to shortlisted candidates to schedule an initial screening call. ' + company + ' is an equal opportunity employer and welcomes applications from candidates of all backgrounds, identities, and experiences.',
+    '',
+    'We look forward to learning more about you and exploring how your unique talents can contribute to ' + company + 's continued success. Apply today and take the first step toward an exciting and rewarding career with ' + company + '.'
+  ];
+
+  return lines.join('\n');
+}
+
+// ── Generate HTML File ──
+function generateHTML(company, country, jobType, description, isRemote, applyURL) {
+  var slug = (company + '-' + jobType + '-' + country).toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  var today = new Date().toISOString().split('T')[0];
+  var location = isRemote ? 'Remote' : country;
+  var empType = isRemote ? 'TELECOMMUTE' : 'FULL_TIME';
+
+  var includeSchema = document.getElementById('schemaToggle').checked;
+  var descShort = description.replace(/"/g, "'").replace(/\n/g, ' ').substring(0, 300);
+
+  var schemaTag = '';
+  if (includeSchema) {
+    var schemaObj = {
+      "@context": "https://schema.org",
+      "@type": "JobPosting",
+      "title": jobType,
+      "description": descShort,
+      "datePosted": today,
+      "validThrough": "2026-12-31",
+      "employmentType": empType,
+      "hiringOrganization": { "@type": "Organization", "name": company },
+      "jobLocation": { "@type": "Place", "address": { "@type": "PostalAddress", "addressCountry": country } },
+      "applicantLocationRequirements": { "@type": "Country", "name": country }
+    };
+    if (isRemote) schemaObj["jobLocationType"] = "TELECOMMUTE";
+    schemaTag = '<sc' + 'ript type="application/ld+json">' + JSON.stringify(schemaObj, null, 2) + '<\/sc' + 'ript>';
+  }
+
+  // Convert markdown to HTML
+  var html = description
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/^- (.+)$/gm, '<li>$1</li>')
+    .replace(/(<li>[\s\S]*?<\/li>)/g, function(match) { return match; })
+    .replace(/(<li>.*<\/li>\n?)+/g, function(m) { return '<ul>' + m + '</ul>'; })
+    .replace(/\n\n/g, '</p><p>')
+    .replace(/^(?!<[hup\/])/gm, '<p>')
+    .replace(/<p>(<[hup])/g, '$1')
+    .replace(/<p><\/p>/g, '');
+
+  return '<!DOCTYPE html>\n' +
+'<html lang="en">\n' +
+'<head>\n' +
+'<meta charset="UTF-8">\n' +
+'<meta name="viewport" content="width=device-width, initial-scale=1.0">\n' +
+'<title>' + jobType + ' at ' + company + ' | ' + location + ' | Remote Jobs</title>\n' +
+'<meta name="description" content="Apply for ' + jobType + ' at ' + company + '. ' + location + ' opportunity. Apply now!">\n' +
+'<meta name="robots" content="index, follow">\n' +
+schemaTag + '\n' +
+'<style>\n' +
+'@import url(\'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@700;800&display=swap\');\n' +
+':root{--primary:#1a1a2e;--accent:#e94560;--bg:#f0f0f8;--card:#fff;--border:#d0d0e8;--text:#1a1a2e;--muted:#6b6b8a}\n' +
+'*{box-sizing:border-box;margin:0;padding:0}\n' +
+'body{font-family:\'Inter\',sans-serif;background:var(--bg);color:var(--text)}\n' +
+'nav{background:linear-gradient(135deg,#1a1a2e,#16213e);padding:1rem 2rem}\n' +
+'.logo{font-family:\'Manrope\',sans-serif;font-size:1.4rem;font-weight:800;color:#fff;text-decoration:none}\n' +
+'.container{max-width:900px;margin:2rem auto;padding:0 1.5rem 4rem}\n' +
+'.back{display:inline-flex;align-items:center;gap:0.5rem;color:var(--muted);text-decoration:none;font-size:0.88rem;margin-bottom:1.5rem;font-weight:600}\n' +
+'.back:hover{color:var(--accent)}\n' +
+'.card{background:var(--card);border:2px solid var(--border);border-radius:16px;padding:2.5rem;box-shadow:0 4px 20px rgba(0,0,0,0.06)}\n' +
+'.company{font-size:0.8rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.5rem}\n' +
+'h1{font-family:\'Manrope\',sans-serif;font-size:2rem;font-weight:800;margin-bottom:1.5rem;line-height:1.2}\n' +
+'.meta{display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:2rem;padding-bottom:2rem;border-bottom:2px solid var(--border)}\n' +
+'.meta-item{padding:0.4rem 0.9rem;background:#eaeaf8;border-radius:8px;font-size:0.82rem;font-weight:600;color:var(--muted)}\n' +
+'.meta-item.remote{background:rgba(233,69,96,0.1);color:#e94560}\n' +
+'.description{line-height:1.9;color:#2d3f52}\n' +
+'.description h2{font-size:1.2rem;font-weight:700;color:var(--primary);margin:2rem 0 0.75rem;padding-bottom:0.5rem;border-bottom:2px solid var(--border)}\n' +
+'.description p{margin-bottom:1rem}\n' +
+'.description ul{margin:0.75rem 0 1rem 1.5rem}\n' +
+'.description li{margin-bottom:0.5rem}\n' +
+'.apply-section{margin-top:3rem;text-align:center;padding-top:2rem;border-top:2px solid var(--border)}\n' +
+'.apply-btn{display:inline-flex;align-items:center;gap:0.75rem;background:linear-gradient(135deg,#e94560,#c73652);color:#fff;text-decoration:none;padding:1.1rem 3rem;border-radius:12px;font-weight:700;font-size:1rem;box-shadow:0 4px 20px rgba(233,69,96,0.3)}\n' +
+'.apply-btn:hover{transform:translateY(-2px)}\n' +
+'footer{background:linear-gradient(135deg,#1a1a2e,#16213e);color:rgba(255,255,255,0.7);text-align:center;padding:1.5rem;font-size:0.82rem}\n' +
+'</style>\n' +
+'</head>\n' +
+'<body>\n' +
+'<nav><a href="../index.html" class="logo">Remote Jobs</a></nav>\n' +
+'<div class="container">\n' +
+'<a href="../index.html" class="back">← Back to Jobs</a>\n' +
+'<div class="card">\n' +
+'<div class="company">' + company + '</div>\n' +
+'<h1>' + jobType + '</h1>\n' +
+'<div class="meta">\n' +
+'<span class="meta-item' + (isRemote ? ' remote' : '') + '">📍 ' + location + '</span>\n' +
+'<span class="meta-item">🌍 ' + country + '</span>\n' +
+'<span class="meta-item">💼 ' + (isRemote ? 'Remote' : 'Full-time') + '</span>\n' +
+'<span class="meta-item">📅 Posted ' + today + '</span>\n' +
+'</div>\n' +
+'<div class="description">' + html + '</div>\n' +
+'<div class="apply-section">\n' +
+'<p style="margin-bottom:1rem;color:var(--muted)">Interested in this position? Apply now!</p>\n' +
+'<a href="' + applyURL + '" class="apply-btn" target="_blank" rel="noopener">✉️ Apply Now</a>\n' +
+'</div>\n' +
+'</div>\n' +
+'</div>\n' +
+'<footer>© 2026 Remote Jobs. All rights reserved.</footer>\n' +
+'</body>\n' +
+'</html>';
+}
+
+// ── Main Generation ──
+document.getElementById('generateBtn').addEventListener('click', function() {
+  startGeneration();
+});
+
+async function startGeneration() {
+  if (companies.length === 0) { alert('Please add at least one company!'); return; }
+  if (selectedCountries.length === 0) { alert('Please select at least one country!'); return; }
+
+  var postsPerCompany = parseInt(document.getElementById('postsPerCompany').value) || 100;
+  var applyURL = document.getElementById('applyURL').value;
+  var isRemoteMix = document.getElementById('remoteToggle').checked;
+  var totalPosts = companies.length * postsPerCompany;
+
+  // Reset
+  generatedFiles = {};
+  statDone = 0;
+  statFailed = 0;
+  document.getElementById('statTotal').textContent = totalPosts;
+  document.getElementById('statDone').textContent = '0';
+  document.getElementById('statFailed').textContent = '0';
+  document.getElementById('logBox').innerHTML = '';
+  document.getElementById('previewGrid').innerHTML = '';
+  document.getElementById('previewSection').style.display = 'none';
+  document.getElementById('progressWrap').style.display = 'block';
+  document.getElementById('generateBtn').disabled = true;
+
+  log('🚀 Starting generation of ' + totalPosts + ' posts...', 'info');
+  log('📦 Companies: ' + companies.join(', '), 'info');
+  log('🌍 Countries: ' + selectedCountries.join(', '), 'info');
+
+  var current = 0;
+
+  for (var ci = 0; ci < companies.length; ci++) {
+    var company = companies[ci];
+    log('🏢 Processing: ' + company, 'warn');
+
+    for (var pi = 0; pi < postsPerCompany; pi++) {
+      current++;
+      var country = selectedCountries[pi % selectedCountries.length];
+      var isRemote = isRemoteMix ? (pi % 2 === 0) : false;
+      var jobPool = isRemote ? JOB_TYPES_REMOTE : JOB_TYPES_ALL;
+      var jobType = jobPool[pi % jobPool.length];
+
+      var pct = Math.round((current / totalPosts) * 100);
+      document.getElementById('progressFill').style.width = pct + '%';
+      document.getElementById('progressText').textContent = current + '/' + totalPosts + ' posts (' + pct + '%)';
+
+      try {
+        var description = generateDescription(company, country, jobType, isRemote);
+        var html = generateHTML(company, country, jobType, description, isRemote, applyURL);
+        var slug = (company + '-' + jobType + '-' + country).toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        var filename = 'jobs/' + slug + '.html';
+        generatedFiles[filename] = html;
+
+        statDone++;
+        document.getElementById('statDone').textContent = statDone;
+        log('[' + current + '/' + totalPosts + '] ✅ ' + jobType + ' @ ' + company + ' → ' + country, 'success');
+        addPreview(company, jobType, country, isRemote);
+
+        // Small yield every 50 posts to keep UI responsive
+        if (current % 50 === 0) {
+          await new Promise(function(r) { setTimeout(r, 0); });
+        }
+      } catch(err) {
+        statFailed++;
+        document.getElementById('statFailed').textContent = statFailed;
+        log('[' + current + '/' + totalPosts + '] ❌ Failed: ' + err.message, 'error');
+      }
+    }
+  }
+
+  log('🎉 Done! ' + statDone + ' posts created, ' + statFailed + ' failed.', 'success');
+  document.getElementById('generateBtn').disabled = false;
+  document.getElementById('progressText').textContent = '✅ Done! ' + statDone + ' posts generated';
+  document.getElementById('previewSection').style.display = 'block';
+}
+
+function addPreview(company, jobType, country, isRemote) {
+  var grid = document.getElementById('previewGrid');
+  var card = document.createElement('div');
+  card.className = 'preview-card';
+  var title = document.createElement('div');
+  title.className = 'p-title';
+  title.textContent = jobType;
+  var comp = document.createElement('div');
+  comp.className = 'p-company';
+  comp.textContent = company + ' · ' + country;
+  var tag = document.createElement('span');
+  tag.className = 'p-tag';
+  tag.textContent = isRemote ? '🌐 Remote' : '📍 On-site';
+  card.appendChild(title);
+  card.appendChild(comp);
+  card.appendChild(tag);
+  grid.appendChild(card);
+}
+
+// ── Download ZIP ──
+document.getElementById('downloadBtn').addEventListener('click', function() {
+  downloadZIP();
+});
+
+async function downloadZIP() {
+  var zip = new JSZip();
+  var keys = Object.keys(generatedFiles);
+  for (var i = 0; i < keys.length; i++) {
+    zip.file(keys[i], generatedFiles[keys[i]]);
+  }
+
+  var indexLines = ['<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Remote Jobs</title>',
+    '<style>body{font-family:sans-serif;padding:2rem}a{display:block;padding:0.4rem;color:#e94560}</style>',
+    '</head><body><h1>Remote Jobs (' + statDone + ' posts)</h1>'];
+  for (var i = 0; i < keys.length; i++) {
+    indexLines.push('<a href="' + keys[i] + '">' + keys[i] + '</a>');
+  }
+  indexLines.push('</body></html>');
+  zip.file('index.html', indexLines.join('\n'));
+
+  log('📦 Creating ZIP...', 'info');
+  var blob = await zip.generateAsync({ type: 'blob' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'remote-jobs-' + Date.now() + '.zip';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  log('✅ ZIP downloaded!', 'success');
+}
+
+// ── Init ──
+initCountries();
+</script>
+</body>
+</html>
