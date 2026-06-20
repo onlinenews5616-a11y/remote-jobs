@@ -234,11 +234,18 @@ let statFailed = 0;
 // ── Init Countries ──
 function initCountries() {
   const grid = document.getElementById('countriesGrid');
-  grid.innerHTML = COUNTRIES.map(c => `
-    <label class="country-check">
-      <input type="checkbox" value="${c}" onchange="updateCountries()"> ${c}
-    </label>
-  `).join('');
+  grid.innerHTML = '';
+  COUNTRIES.forEach(function(c) {
+    var label = document.createElement('label');
+    label.className = 'country-check';
+    var cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.value = c;
+    cb.addEventListener('change', updateCountries);
+    label.appendChild(cb);
+    label.appendChild(document.createTextNode(' ' + c));
+    grid.appendChild(label);
+  });
 }
 
 function updateCountries() {
@@ -261,9 +268,7 @@ function addCompanies() {
   renderCompanies();
 }
 
-document.getElementById('companyInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') addCompanies();
-});
+// keydown listener added in init
 
 function removeCompany(name) {
   companies = companies.filter(c => c !== name);
@@ -271,12 +276,24 @@ function removeCompany(name) {
 }
 
 function renderCompanies() {
-  document.getElementById('companiesList').innerHTML = companies.map(c => `
-    <div class="company-tag">
-      <span>🏢 ${c}</span>
-      <button onclick="removeCompany('${c}')">×</button>
-    </div>
-  `).join('') || '<div style="color:var(--muted);font-size:0.82rem;padding:0.5rem 0">No companies added yet</div>';
+  var list = document.getElementById('companiesList');
+  list.innerHTML = '';
+  if (companies.length === 0) {
+    list.innerHTML = '<div style="color:var(--muted);font-size:0.82rem;padding:0.5rem 0">No companies added yet</div>';
+    return;
+  }
+  companies.forEach(function(c, idx) {
+    var div = document.createElement('div');
+    div.className = 'company-tag';
+    var span = document.createElement('span');
+    span.textContent = '🏢 ' + c;
+    var btn = document.createElement('button');
+    btn.textContent = '×';
+    btn.addEventListener('click', function() { removeCompany(c); });
+    div.appendChild(span);
+    div.appendChild(btn);
+    list.appendChild(div);
+  });
 }
 
 // ── Log ──
@@ -612,8 +629,13 @@ ${Object.keys(generatedFiles).map(f => `<a href="${f}">${f}</a>`).join('\n')}
 }
 
 // ── Init ──
-initCountries();
-renderCompanies();
+document.addEventListener('DOMContentLoaded', function() {
+  initCountries();
+  renderCompanies();
+  document.getElementById('companyInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') addCompanies();
+  });
+});
 
 </script>
 </body>
