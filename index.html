@@ -145,15 +145,9 @@
     <!-- Settings -->
     <div class="panel">
       <div class="panel-title"><div class="dot"></div> Settings</div>
-      <div class="settings-row">
-        <div class="form-group">
-          <label>Posts per Company</label>
-          <input type="number" id="postsPerCompany" value="100" min="1" max="1000" />
-        </div>
-        <div class="form-group">
-          <label>Groq API Key</label>
-          <input type="password" id="groqKey" placeholder="gsk_..." />
-        </div>
+      <div class="form-group">
+        <label>Posts per Company</label>
+        <input type="number" id="postsPerCompany" value="100" min="1" max="9999999" />
       </div>
       <div class="form-group">
         <label>Apply Now URL</label>
@@ -375,7 +369,7 @@ At ${company}, we are committed to creating an environment where our employees c
 
 ## Work Environment
 
-${company} takes pride in fostering a workplace culture that is inclusive, collaborative, and forward-thinking. ${isRemote ? 'As a fully remote ' + jobType + ', you will have access to all the tools, resources, and support you need to succeed from wherever you are in the world. Our remote work culture is built on trust, transparency, and clear communication, ensuring that every team member feels connected, valued, and empowered regardless of their physical location.' : 'As a ' + jobType + ' based in ' + country + ', you will be part of a vibrant local team that benefits from both the resources of a global organization and the close-knit culture of a regional office. Our ' + country + ' operations are a critical part of ' + company + ''s global strategy, and the work you do here will have a meaningful impact on the organization as a whole.'}
+${company} takes pride in fostering a workplace culture that is inclusive, collaborative, and forward-thinking. ${isRemote ? 'As a fully remote ' + jobType + ', you will have access to all the tools, resources, and support you need to succeed from wherever you are in the world. Our remote work culture is built on trust, transparency, and clear communication, ensuring that every team member feels connected, valued, and empowered regardless of their physical location.' : 'As a ' + jobType + ' based in ' + country + ', you will be part of a vibrant local team that benefits from both the resources of a global organization and the close-knit culture of a regional office. Our ' + country + ' operations are a critical part of ' + company + "\'s global strategy, and the work you do here will have a meaningful impact on the organization as a whole.'}
 
 We are proud of the diversity of our team and the unique perspectives that each member brings to the table. At ${company}, we do not just accept difference — we celebrate it, nurture it, and believe it makes us stronger, more creative, and more effective as an organization.
 
