@@ -508,7 +508,7 @@ async function startGeneration() {
         addPreview(company, jobType, country, isRemote);
 
         // Small delay to avoid rate limit
-        await new Promise(r => setTimeout(r, 2000));
+        await new Promise(r => setTimeout(r, 1800));
 
       } catch (err) {
         statFailed++;
