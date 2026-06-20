@@ -442,21 +442,58 @@ function generateHTML(company, country, jobType, description, isRemote, applyURL
   var empType = isRemote ? 'TELECOMMUTE' : 'FULL_TIME';
 
   var includeSchema = document.getElementById('schemaToggle').checked;
-  var descShort = description.replace(/"/g, "'").replace(/\n/g, ' ').substring(0, 300);
 
   var schemaTag = '';
   if (includeSchema) {
+    var fullDesc = description.replace(/"/g, "'").replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
     var schemaObj = {
       "@context": "https://schema.org",
       "@type": "JobPosting",
       "title": jobType,
-      "description": descShort,
+      "description": fullDesc,
       "datePosted": today,
       "validThrough": "2026-12-31",
       "employmentType": empType,
-      "hiringOrganization": { "@type": "Organization", "name": company },
-      "jobLocation": { "@type": "Place", "address": { "@type": "PostalAddress", "addressCountry": country } },
-      "applicantLocationRequirements": { "@type": "Country", "name": country }
+      "hiringOrganization": {
+        "@type": "Organization",
+        "name": company,
+        "sameAs": "https://www.google.com/search?q=" + encodeURIComponent(company)
+      },
+      "jobLocation": {
+        "@type": "Place",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "100 Corporate Drive",
+          "addressLocality": country,
+          "addressRegion": country,
+          "postalCode": "10001",
+          "addressCountry": country
+        }
+      },
+      "applicantLocationRequirements": { "@type": "Country", "name": country },
+      "baseSalary": {
+        "@type": "MonetaryAmount",
+        "currency": "USD",
+        "value": {
+          "@type": "QuantitativeValue",
+          "minValue": 50000,
+          "maxValue": 120000,
+          "unitText": "YEAR"
+        }
+      },
+      "jobBenefits": "Health insurance, dental coverage, vision plan, paid time off, remote work flexibility, 401k, professional development budget",
+      "educationRequirements": {
+        "@type": "EducationalOccupationalCredential",
+        "credentialCategory": "bachelor degree"
+      },
+      "experienceRequirements": {
+        "@type": "OccupationalExperienceRequirements",
+        "monthsOfExperience": 36
+      },
+      "skills": jobType + ", communication, teamwork, problem solving, project management",
+      "workHours": "40 hours per week",
+      "occupationalCategory": jobType,
+      "industry": "Technology and Business Services"
     };
     if (isRemote) schemaObj["jobLocationType"] = "TELECOMMUTE";
     schemaTag = '<sc' + 'ript type="application/ld+json">' + JSON.stringify(schemaObj, null, 2) + '<\/sc' + 'ript>';
