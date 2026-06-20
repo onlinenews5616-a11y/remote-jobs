@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Job Details - Remote Jobs</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@700;800&display=swap');
+  :root { --primary: #1a1a2e; --accent: #e94560; --bg: #f0f0f8; --card: #ffffff; --border: #d0d0e8; --text: #1a1a2e; --muted: #6b6b8a; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); }
+  nav { background: linear-gradient(135deg, #1a1a2e, #16213e); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+  .logo { font-family: 'Manrope', sans-serif; font-size: 1.5rem; font-weight: 800; color: #fff; text-decoration: none; }
+  .back-btn { color: rgba(255,255,255,0.8); text-decoration: none; font-size: 0.9rem; display: flex; align-items: center; gap: 0.5rem; }
+  .back-btn:hover { color: #fff; }
+  .container { max-width: 900px; margin: 2rem auto; padding: 0 2rem 4rem; }
+  .job-card { background: var(--card); border: 2px solid var(--border); border-radius: 16px; padding: 2.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+  .job-company { font-size: 0.85rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.75rem; }
+  .job-title { font-family: 'Manrope', sans-serif; font-size: 2rem; font-weight: 800; margin-bottom: 1.5rem; line-height: 1.2; }
+  .job-meta { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 2px solid var(--border); }
+  .meta-item { display: flex; align-items: center; gap: 0.4rem; padding: 0.4rem 0.9rem; background: #eaeaf8; border-radius: 8px; font-size: 0.82rem; font-weight: 600; color: var(--muted); }
+  .meta-item.remote { background: rgba(233,69,96,0.1); color: #e94560; }
+  .job-description { line-height: 1.9; color: #2d3f52; font-size: 0.97rem; }
+  .job-description h2 { color: var(--primary); font-size: 1.2rem; font-weight: 700; margin: 2rem 0 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--border); }
+  .job-description h3 { color: var(--primary); font-size: 1rem; font-weight: 700; margin: 1.5rem 0 0.75rem; }
+  .job-description p { margin-bottom: 1.2rem; }
+  .job-description ul { margin: 1rem 0 1.2rem 1.5rem; }
+  .job-description li { margin-bottom: 0.5rem; }
+  .apply-section { margin-top: 3rem; text-align: center; padding-top: 2rem; border-top: 2px solid var(--border); }
+  .apply-btn { display: inline-flex; align-items: center; gap: 0.75rem; background: linear-gradient(135deg, #e94560, #c73652); color: #fff; text-decoration: none; padding: 1.1rem 3rem; border-radius: 12px; font-weight: 700; font-size: 1rem; transition: all 0.2s; box-shadow: 0 4px 20px rgba(233,69,96,0.3); }
+  .apply-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(233,69,96,0.4); }
+  .loading { text-align: center; padding: 4rem; color: var(--muted); }
+  .spinner { width: 40px; height: 40px; border: 4px solid #eaeaf8; border-top-color: #e94560; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 1rem; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  footer { background: linear-gradient(135deg, #1a1a2e, #16213e); color: rgba(255,255,255,0.8); text-align: center; padding: 2rem; font-size: 0.85rem; margin-top: 4rem; }
+</style>
+
+<!-- JSON-LD JobPosting Schema (filled dynamically) -->
+<script id="jobSchema" type="application/ld+json"></script>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo">Remote Jobs</a>
+  <a href="/" class="back-btn">← Back to Jobs</a>
+</nav>
+
+<div class="container">
+  <div id="jobContent">
+    <div class="loading">
+      <div class="spinner"></div>
+      Loading job details...
+    </div>
+  </div>
+</div>
+
+<footer>
+  <p>© 2026 Remote Jobs. Real jobs from real companies worldwide.</p>
+</footer>
+
+<script>
+function getParam(name) {
+  return new URLSearchParams(window.location.search).get(name);
+}
+
+function stripHTML(html) {
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  return div.textContent || div.innerText || '';
+}
+
+function formatDescription(html) {
+  if (!html) return '<p>No description available.</p>';
+  // Clean up the HTML
+  return html
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+}
+
+function renderJob(job) {
+  if (!job) {
+    document.getElementById('jobContent').innerHTML = '<div class="loading">Job not found.</div>';
+    return;
+  }
+
+  // Update page title
+  document.title = `${job.title} at ${job.company_name} - Remote Jobs`;
+
+  // Add JSON-LD Schema
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "JobPosting",
+    "title": job.title,
+    "description": stripHTML(job.description || ''),
+    "datePosted": job.publication_date || new Date().toISOString().split('T')[0],
+    "validThrough": "2026-12-31",
+    "employmentType": job.job_type?.toUpperCase().replace('_', '_') || "FULL_TIME",
+    "hiringOrganization": {
+      "@type": "Organization",
+      "name": job.company_name
+    },
+    "jobLocationType": "TELECOMMUTE",
+    "applicantLocationRequirements": {
+      "@type": "Country",
+      "name": job.candidate_required_location || "Worldwide"
+    }
+  };
+  document.getElementById('jobSchema').textContent = JSON.stringify(schema, null, 2);
+
+  // Render job
+  document.getElementById('jobContent').innerHTML = `
+    <div class="job-card">
+      <div class="job-company">${job.company_name || 'Company'}</div>
+      <div class="job-title">${job.title}</div>
+      <div class="job-meta">
+        ${job.candidate_required_location ? `<span class="meta-item remote">📍 ${job.candidate_required_location}</span>` : ''}
+        ${job.category ? `<span class="meta-item">💼 ${job.category}</span>` : ''}
+        ${job.job_type ? `<span class="meta-item">⏰ ${job.job_type.replace('_', ' ')}</span>` : ''}
+        ${job.salary ? `<span class="meta-item">💰 ${job.salary}</span>` : ''}
+        <span class="meta-item">📅 Posted ${job.publication_date ? new Date(job.publication_date).toLocaleDateString() : 'Recently'}</span>
+      </div>
+      <div class="job-description">
+        ${formatDescription(job.description)}
+      </div>
+      <div class="apply-section">
+        <p style="margin-bottom:1rem;color:var(--muted)">Ready to apply? Click below to submit your application.</p>
+        <a href="https://remotejob09.job4intern.com/pages/job-application" class="apply-btn" target="_blank" rel="noopener">
+          ✉️ Apply Now
+        </a>
+      </div>
+    </div>
+  `;
+}
+
+// Load job from localStorage
+const job = JSON.parse(localStorage.getItem('currentJob') || 'null');
+renderJob(job);
+</script>
+</body>
+</html>
